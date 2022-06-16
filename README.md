@@ -1,6 +1,6 @@
-# Funktionale Programmierung FS22
+# Funktionale Programmierung
 
-## Part 1
+## Einleitung
 
 **Das Imperative Modell** basiert auf Zuständen, Zustandsübergängen und deren zeitlichen Abfolge (Schritt-für-Schritt).
 
@@ -36,272 +36,55 @@ sum (a1:rest) = a1 + sum rest
 
 **Anwendungen:** Compilerbau, Theorembeweiser, KI, Numerik, Data Science, FIntech, Sonstiges bis hin zu GUI Programmierung
 
-### Code
+## Funktionen und Typen I
 
-#### Basics
+Variablen haben in der funktionalen Programmierung **fundamental** eine andere Bedeutung als in der imperativen Programmierung.
 
-**Types:**
+`x = 3`
 
-Integer e.g. `5`
+**Funktional:** `x` benennt unabhängig von der Zeit den **Wert** `3`
 
-Float e.g. `5.0`
+**Imperativ:** `x` benennt einen **Ort**. Sein Wert ändert sich mit der Zeit.
 
-Bool e.g. `True` or `False`
+Wert-Variable-Relation ist im funktionalen Paradigma **zeitunabhängig**. Entsprechen daher eher Konstanten als Variablen (**immutability**).
 
-Char e.g. `'a'`
+**Nebeneffekte** werden möglichst **vermieden** oder mindestens **isoliert**. *Interne* Nebeneffekte ändern den Zustand des Programms und kommen in rein funktionalen Sprachen nicht vor. *Externe* Nebeneffekte verändern den Zustand des Kontextes (Aussenwelt) und werden vom Rest des Programms isoliert => **Referenzielle Transparenz**.
 
-String e.g. `"string"`
+Vorteile der referenziellen Transparenz: Lazy evaluation, simplere Programmverifikation, erleichterte Beweisführung, equational reasoning.
 
-Lists e.g. `[Type]`
+**Typen** ≃ Mengen, anstelle $x \in t$ schreibt man `x :: t` in Haskell. **Grundtypen** in Haskell sind `Bool` True oder False, `Char` 'a', `String` "abc" und `Integer` 12 ($-2^{31} \leq x < 2^{31}$). Typ `a` gibt es einen Typ `[a]` für Listen.
 
-**Bool Operators:**
+**Funktionstyp** `a -> b` akzeptiert Eingabe vom Typ `a` und gibt eine Ausgabe vom Typ `b` zurück.
 
-Oder `||`
+**Tupel** mit Typ `(a, b, c)` bzw. `(Int, String, Char)` beinhaltet z.B das Tripel `(1, "1", '1')`.
 
-Und `&&`
-
-Nicht (!=) `not`
-
-concat => `greeting = "hello" ++ " " ++ "world"`
-
-`greeting2 = concat ["hello", " ", "world"]`
-
-**Math Operators:**
-
-Integer Division \`div\`
-
-Normal Division `/ `
-
-**List Comprehension:**
-
-Range e.g. `someInts = [1..15]`
-
-`someEvens = [2*x | x <- [-5..5]]`
-
-#### Functions
-
-**Functions:**
-
-General Syntax: Input on Left, Output on Right
-
-`inc1 n = n + 1`
-
-Lambda Notation: Everything written on right side
-
-`inc1 = \n -> n + 1`
-
-Tupled Inputs
-
-`addTupled :: (Integer, Integer) -> Integer`
-
-`addTupled (x, y) = x + y`
-
-**Curried Functions:** a function that returns a function
-
-`add = \ x y -> x + y` (collapsed lambdas)
-
-`add = \x -> \y -> x + y`
-
-`add x = \y -> x + y`
-
-`add x y = x + y`
-
-**Partial Application:** special case of 'add'
-
-`add3 = add 3`
-
-`add3 x = add 3 x`
-
-Binary Function `(++)` concatenates strings
-
-`prepArrow = (++) "=> "`
-
-`prepArrow string = "=> " ++ string`
-
-**High-Order Functions:**
-
-Function as Input
-
-`apply f x = f x` accepts function as input and apply to argument
-
-Function as Input and Output
-
-`twice f x = f (f x)` Accepts and returns a function
-
-`compose f g x = g (f x)` accepts two functions and applies them to the argument
-
-**List Map:**
-
-Apply a function to every element in the list
-
-`mapping = map (\n -> n + 1) [1, 2, 3]`
-
-`mapping2 = map (+ 1) [1, 2, 3]`
-
-#### Types
-
-**Product Types:**
+**Records** sind Tupel, in denen Einträge Labels tragen:
 
 ```haskell
--- Records are tuples with custom named fields and a constructor.
-data Character = Character
-    { firstName :: String
-    , lastName:: String
-    }
-    
-han :: Character
-han = Character
-    { firstName = "Han"
-    , lastName = "Solo"
-    }
-    
--- Getters
--- Values can be extracted from records by using the fields name as a function.
-solo :: String
-solo = firstName han
-
--- Setters
--- Values of a record can be changed with the syntax below.
--- A copy of 'han' will be made.
-ben :: Character
-ben = han {firstName = "Ben"}
+data Customer = Customer
+	{	customerId :: Integer
+	,	name :: String
+	}
 ```
 
-**Sum Types:**
-
-The values of a sum type come in a number of different variants. Each value can be uniquely assigned to one of the variants.
+**Summentyp** entspricht der Vereinigung von disjunkten Mengen:
 
 ```haskell
-data YesNo
-    = Yes
-    | No
-
-yes :: YesNo
-yes = Yes
-
-data Identification
-    = Email String
-    | Username String
-
-hanId :: Identification
-hanId = Username "han_32"
-
-obiWanId :: Identification
-obiWanId = Email "kenobi@rebel-alliance.space"
-```
-
-**Recursive Types:**
-
-```haskell
-data BinaryTree a
-    = Node a (BinaryTree a) (BinaryTree a)
-    | Leaf a
-
-tree :: BinaryTree Int
-tree = Node 1 (Leaf 2) (Leaf 3)
-
--- Lists are also a recursive sum type (with syntactic sugar for 'Cons' and 'E') 
-data MyList a
-    = Cons a (MyList a)
-    | Nil
-
--- [1,2,3] as 'MyList'
-list :: MyList Integer
-list = Cons 1 (Cons 2 (Cons 3 Nil))
-
--- Combining Unions and Records
 data Shape
-    =  Circle { radius :: Float }
-    |  Rectangle 
-        { len :: Float
-        , width :: Float
-        }
+	= Rectangle Float Float
+	| Square Float
+	| Circle Float
+	
+-- Können auch rekursiv sein
+data Tree a
+	= Node (Tree a) a (Tree a)
+	| Leaf a
+	
+-- Listen sind als Summentyp definiert
+data List a
+	= Cons a (List a)
+	| Nil
 ```
 
-#### Control
-
-**If Else:**
-
-`three = if True then 3 else 4`  Ternary operator
-
-```haskell
-describe :: Integer -> String
-describe x =
-    if x < 3 then 
-        "small"
-    else if x < 5 then 
-        "medium"
-    else
-        "large"
-```
-
-**Guards:**
-
-```haskell
-describe' :: Integer -> String
-describe' x
-    | x < 3     = "small"
-    | x < 4     = "medium"
-    | otherwise = "large"
-```
-
-**Cases:**
-
-```haskell
-count :: Integer -> String
-count 0 = "zero"
-count 1 = "one"
-count 2 = "two"
-count _ = "I don't know"
-
--- Alternative Syntax
-count' :: Integer -> String
-count' n = case n of
-    0 -> "zero"
-    1 -> "one"
-    2 -> "two"
-    _ -> "I don't know"
-```
-
-**Let Bindings:**
-
-```haskell
-five :: Integer
-five =
-    let 
-        x = 2
-        y = x + 1
-    in
-    x + y
-
-myFunc :: Integer -> Integer
-myFunc x =
-    let 
-        complicated = 
-            x `mod` 2 == 0 && x `mod` 4 /= 0
-    in
-    if complicated then 
-        x `div` 2
-    else 
-        x + 1
-```
-
-**Where:**
-
-Where is the same as let, but it does not preceed but follow a "main" declaration.
-
-```haskell
-six :: Integer
-six =
-    x + y
-    where
-        x = 2
-        y = x + 2
-
-myFunc' :: Integer -> Integer
-myFunc' x =
-    (magicNumber * x) + 1
-    where
-        magicNumber = x + 42
-```
+In **Typklassen** werden verschiedene Typen, die bestimmte Eigenschaften teilen zusammengefasst. Z.b enthält die Typklasse `Eq` alle Typen deren Elemente vergleichbar sind => `(==) :: Eq a => a -> a -> Bool`
 
