@@ -174,3 +174,141 @@ data Result a b c
 	| YError c
 ```
 
+## Rekursion
+
+Rekurisve Definitionen zeichnen sich durch die **Bezugnahme** auf das zu **definierende Objekt** *in einer einfacheren Form* aus.
+$$
+2^0 = 1 \\
+\underbrace{2^{n+1}}_\text{definiere} = 2 \cdot \underbrace{2^n}_\text{Selbstbezug}
+$$
+ Ist ein Algorithmus der aus bereits vorhandenen Funktionswerten weitere Funktionswerte generiert. Wesentliche Zutaten eienr rekursiven Definition sind **bekannte Funktionswerte** und **Funktion G zum Erweitern der Menge bekannter Werte**:
+
+| Formel                  | Info                                                       | Beschreibung                                                 |
+| ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------------ |
+| $2^0 = 1$               | Bekannter Wert                                             | Funktionswert an Stelle 0 ist bekannt.                       |
+| $2^{n+1} = 2 \cdot 2^n$ | $\underbrace{G(x) = 2 \cdot x}_\text{body des rek. Calls}$ | Durch Verdoppeln eines bekannten Funktionswertes erhält man den nächsten Funktionswert. |
+
+Arten von Rekursionsgleichungen werden als *Rekursionsschemas* bezeichnet.
+
+**Primitive Rekursion:**
+$$
+f(0, \overrightarrow{x}) = c(\overrightarrow{x}) \\
+f(n+1, \overrightarrow{x}) = G(f(n,\overrightarrow{x}),n,\overrightarrow{x})
+$$
+Beispiel allgemeine Exponentialfunktion:
+
+| Funktion                | Schema               |
+| ----------------------- | -------------------- |
+| $x^0 = 1$               | $c(x) = 1$           |
+| $x^{n+1} = x \cdot x^n$ | $G(a,x) = x \cdot a$ |
+
+Beispiel Fakultätsfunktion:
+
+| Funktion                | Schema                   |
+| ----------------------- | ------------------------ |
+| $0! = 1$                | $c=1$                    |
+| $n+1! = (n+1) \cdot n!$ | $G(a,n) = (n+1) \cdot a$ |
+
+**Wertverlaufrekursion:**
+
+Definition nimmt auf mehrere Vorgänger Bezug.
+$$
+f(n) = G(f \uparrow n) \\
+f(n, \overrightarrow{x}) = G(f \uparrow n, n, \overrightarrow{x})
+$$
+Beispiel Fibonacci:
+
+$fib(0) = 0$
+
+$fib(1) = 1$
+
+$fib(n) = fib(n-1) + fib(n-2)$
+
+**Allgemeine Rekursion:**
+
+Rekursion kann grundsätzlich entlang jeder Relation angewendet werden. Die zu definierende Definition ist möglicherweise nicht immer wohldefiniert.
+
+Beispiel Collatz Funktion $col(x)$:
+
+$\frac{x}{2}$ : falls $x$ gerade
+
+$3x + 1$ : sonst
+
+Die Funktion $x \rightarrow C_x$ ist eine rekursiv definierbare Funktion, von der nicht bekannt ist, ob sie zu jedem Input ein Output generiert.
+
+### Endrekursion
+
+In der funktionalen Programmierung werden viele, in anderen Paradigmen typischerweise iterativ formulierte, Algorithmen rekursiv ausgedrückt. Rekursion soll effizient übersetzt werden. Wichtig ist dabei insbesondere, nicht für jeden rekursiven Funktionsaufruf den Aufrufstapel zu vergrössern. Dadurch können Stapelüberläufe auch bei tiefer Rekursion verhindert werden. Die “tail-call” Optimierung behandelt genau diesen Fall.
+
+Deklaration liegt in endrekursiver Form oder *tail-recursive* vor, wenn Resultate von rekursiven Aufrufen direkt zurückgegeben werden.
+
+```haskell
+sum_ :: [Integer] -> Integer -- nicht endrekursiv
+sum_ [] = 0
+sum_ (x:xs) = x + (sum_ xs)
+
+sumTR_ :: Integer -> [Integer] -> Integer
+sumTR_ acc [] = acc
+sumTR_ acc (x:xs) = sumTR_ (x + acc) xs
+```
+
+**Akkumulator Pattern** um eine rekursive Funktion in eine endrekursive Form zu bringen. Zwischenresultat explizit in einem Akkumulator mitführen.
+
+```haskell
+-- Beispiel Fakultätsfunktion mit einem Akkumulator
+fakTR :: Integer -> Integer
+fakTR = fakTR_ 1
+	where
+		fakTR_ :: Integer -> Integer -> Integer
+		fakTR_ acc 0 = acc
+		fakTR_ acc n = fakTR_ (n * acc) (n-1)
+```
+
+**Continuation Pattern** führt einen Funktionsparameter mit, der die noch leistende Arbeit darstellt. Ein Akkumulator repräsentiert dagegen bereits geleistete Arbeit.
+
+```haskell
+-- Fakultätsfunktion mit dem Continuation Pattern
+fakC :: Integer -> Integer
+fakC = fakC_ (const 1)
+	where
+		fakC_ f n
+		|n<1=fn
+		| otherwise = fakC_ (\x -> n * (f x)) $ n-1
+```
+
+### Fixpunkte
+
+Fixpunkte bieten einen konstruktiven Zugang zu rekursiv definierten Funktionen. Sie formalisieren die Idee des “Aufbauens einer rekursiven Struktur von Unten”.
+
+Als Fixpunkte einer Funktion $F: X \rightarrow Y$werden Elemente $x \in X \cap Y$ mit $F(x) = x$ bezeichnet. Unter geeigneten Umständen lassen sich Definitionen als Fixpunktlgeichungen darstellen.
+
+Betrachten nun **Fixpunkte höherer Ordnung**. Beispiel Exponentialfunktion:
+
+$\text{expF}(f) = x \rightarrow$
+
+$1$  :  falls $x = 0$
+
+$2 \cdot f(x-1)$  :  sonst
+
+```haskell
+expF f x
+	| x == 0 = 1
+	| otherwise = 2 * f (x - 1)
+```
+
+ Vergleich mit normalen rekursiven Funktion:
+
+```haskell
+ exp x
+	| x == 0 = 1
+	| otherwise = 2 * exp (x - 1)
+```
+
+Konkret besteht der einzige Unterschied darin, dass in expF der Parameter f anstelle eines rekursiven Aufrufes steht.
+
+Wir können in Haskell direkt eine Funktion fix zum finden von Fixpunkten definieren:
+
+```haskell
+fix f = f $ fix f
+```
+
