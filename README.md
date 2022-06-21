@@ -574,3 +574,91 @@ sEval :: Exp -> Int sEval e = case e of
 	Div e1 e2 -> sEval e1 `div` sEval e2
 ```
 
+## $\lambda$-Kalkül
+
+**Lambda Kalküle** implementieren die Idee von Algorithmen als "evaluation of expressions". Haben einfache aber ausdrucksstarke Syntax, mächtige Semantik (Turing vollständig), und modellieren Funktionsdefinition und -anwendung.
+
+Lambda Kalküle bestehen aus **Terme**, **Regeln** zur Manipulation von Termen, und (eventuell) ein **Typensystem**.
+
+Zeichenvorrat für die Lambda **Terme** besteht aus unendlich vielen Variablen x, y, x1, ..., dem Zeichen $\lambda$, dem Punkt und Klammern. Jede Variable und Konstante ist ein Term. Sind $A$ und $B$ Terme, dann ist auch $A B$ (Anwendung von f auf x `f x`) ein Term (Applikation). Ist $x$ eine Variable und $A$ ein Term, dann ist auch $\lambda x.A$ (anonyme Funktion `\x -> A`) ein Term (Abstraktion).
+
+Beispiel Term in Haskell der Lambda-Terme repräsentiert:
+
+```haskell
+data ETerm = Add
+	| N Integer
+	| EVar String
+	| EApp ETerm ETerm
+	| EAbs String ETerm
+```
+
+Konventionen bzgl. der Schreibweise von Termen:
+
+- Äusserste Klammern können weggelassen werden: `A` wird als `(A)` gelesen.
+- Applikation ist linksassoziativ: `A B C` wird als `A(B(C))` gelesen.
+- Bereich einer quantifizierten Variable wird als grösstmöglich angenommen: `λx.A B C` wird als `λx.((A B)C)` gelesen.
+- Terme von der Form `λxyz.A` werden als `λx.λy.λz.A` gelesen.
+
+Den Term A[x := B] erhält man aus dem Term A, indem man alle freien Vorkommen der Variablen x in A durch den Term B ersetzt. Eine **Substitution** A[x := B] ist zulässig, wenn keine der freien Variablen von B durch die Substitution gebunden werden.
+
+Eine unzulässige Substitution: λxy.(x y z)[z := x]
+
+Eine zulässige Substitution: λxy.(x y z)[z := u]
+
+Durch geeignetes Umbenennen von Variablen lässt sich stets zulässig substitutieren. Terme “ausrechnen” im λ-Kalkül beruht darauf Substitutionen vorzunehmen und damit Terme so lange zu vereinfachen, bis sie in einer möglichst einfachen Form vorliegen. Beim Vereinfachen eines Termes spricht man von einer **Konversion** bzw. **Reduktion**.
+
+Ziel der **α-Konversion** ist es äquivalente Terme wie λx.x und λy.y ineinander überführen zu können. Die α-Reduktion formalisiert die Idee, dass die Bedeutung eines Terms nicht von den verwendeten Variablen sondern nur von seiner Struktur abhängt:
+
+$\lambda x.A \rightarrow_\alpha \lambda y.A[x:=y]$     wenn y nicht in A vorkommt.
+
+Beispiel: `λfgx.(g f x) =>_α λhgx.(g h x)`
+
+Die **β-Konversion** formalisiert die Idee der Funktionsanwendung durch ersetzen von Werten durch entsprechende Funktionswerte:
+
+$(\lambda x.A B) \rightarrow_\beta A[x:=B]$    wobei Substitution zulässig sein muss.
+
+Beispiel: `(λx.(Add x x) z) =>_b (Add z z)`
+
+Die **η-Konversion** formalisiert die Idee, dass Funktionen, die dieselben Rückgabewerte produzieren gleich sind:
+
+$(\lambda x.A) \rightarrow_\eta A$    wobei $x \notin FV(A)$ gelten muss.
+
+Beispiel: `λx.(Add y x) =>_n (Add y)`
+
+In λ-Kalkülen mit Konstanten bestimmen **δ-Konversionen** die Bedeutung der Konstanten:
+
+Beispiel: `(Add 14) 3 =>_o 17`
+
+**Rechnen mit Konversionen:**
+
+$\lambda f.\lambda x.(f (fx))(\text{Add } 3)2$
+
+Beta Konversion: $\rightarrow_\beta \lambda x.((\text{Add }3)((\text{Add }3)x))2$
+
+Beta Konversion: $\rightarrow_\beta \lambda x.((\text{Add }3)((\text{Add }3)2))$
+
+Delta Konversion: $\rightarrow_\delta ((\text{Add }3)5)$
+
+Delta Konversion: $\rightarrow_\delta 8$
+
+Reihenfolge in der Reduktionen angewendet werden können ist im Allgemeinen nicht eindeutig.
+
+**Evaluationsstrategien:**
+
+*Normal order reduction* entspricht der Strategie *von Links nach Rechts*; jeweils am weitesten links stehende Redex wird evaluiert. **Lazy evaluation** ist eine Variante dieser Strategie.
+
+*Applicative order reduction* entspricht der Reduktionsstrategie *von innen nach aussen*; der jeweils innerste Redex wird zuerst reduziert. **Strict evaluation** ist eine Variante dieser Strategie.
+
+β-Normalformen werden immer durch *normal oder reduction* gefunden.
+
+Lambda Kalkül beinhaltet keine explizizen Konstrukte um rekursiv Funktionen zu deklarieren. **Rekursion wird über Fixpunkte** erreicht. Fixpunktkombinator $Y$ kann im untypisierten Lambda-Kalkül direkt als Term geschrieben werden: `Y:=λf.(λx.(f (x x)) λx.(f (x x)))`.
+
+Weitere gängige Konstrukte und Datentypen lassen sich im Lambda Kalkül simulieren:
+
+- While Schleifen via Rekursion
+- Natürliche Zahlen durch *Church Numerale*
+- Paare und deren Projektionen mittels expliziter Paarungsfunktion
+- Listen via Paare
+- ...
+
+Lambda Kalkül ist daher folgernd Turing-vollständig.
