@@ -499,3 +499,78 @@ buildUserCM profile cities = do
 	pure $ User name email city
 ```
 
+## Kombinatorenbibliotheken und EDSL
+
+Domänenspezifische Sprachen (**Domain Specific Languages DSLs**) verstehen und verarbeiten Sprache und Begriffe in der Industrie. Deren Keywords sollen möglichst direkt Industriespezifische Begriffe und Konstrukte wiederspiegeln und interpretieren.
+
+DSLs sind eigenständige formale Sprachen udn haben auch einen eigenen Interpreter / Compiler, Parser und mehr. **EDSLs** sind in einer bestehenden Sprache eingebettet. Terme der EDSL sind auch Terme der Host Language (Echte Teilmenge).
+
+Haskell bietet eine geeignete Umgebung zum Implementieren von EDSLs. Als Beispiel wird eine einfache EDSL für 2D-Grafiken in Haskell implementiert:
+
+```haskell
+-- Basic Shapes
+empty :: Shape
+unitDisc :: Shape
+unitSq :: Shape
+
+-- Modifikatoren
+translate :: Vector -> Shape -> Shape
+stretchX :: Float -> Shape -> Shape
+stretchY :: Float -> Shape -> Shape
+stretch :: Float -> Shape -> Shape
+flipX :: Shape -> Shape
+flipY :: Shape -> Shape
+flip45 :: Shape -> Shape
+flip0 :: Shape -> Shape
+rotate :: Float -> Shape -> Shape
+
+-- Kombinatoren
+intersect :: Shape -> Shape -> Shape
+merge :: Shape -> Shape -> Shape
+minus :: Shape -> Shape -> Shape
+
+-- Syntax (AST) der EDSL sind nun beschrieben
+-- Formen können nun direkt beschrieben werden
+iShape = merge
+	(stretchY 2 unitSq)
+	(translate (0, 4) unitDisc)
+	
+-- Semantik für die EDSL angeben.
+-- Formen in unserer Sprache beschreiben und als Bild wiedergeben
+type Point = (Float , Float)
+newtype Shape = Shape { inside :: Point -> Bool }
+-- Interpretieren Shape als Menge von Pixeln in der Ebene
+```
+
+**Shallow Embedding** ist zum Beispiel diese *Shape* EDSL. Grundformen plus Funktionen, die Formen verändern und kombinieren.
+
+**Deep Embedding** entpricht die EDSL einem Datentyp in Haskell:
+
+```haskell
+data Shape
+	= Empty
+	| UnitDisk
+	| UnitSq
+	| Translate Vector Shape
+	| ...
+```
+
+Syntax und Sematnik sind klarer getrennt in einem Deep Embedding. Interessante EDSLs bestehen meist aus einer Mischung dieser beiden Ansätze.
+
+Beispiel einer extrem einfachen EDSL für arithmetische Ausdrücke:
+
+```haskell
+data Exp
+	= Const Int
+	| Add Exp Exp
+	| Mul Exp Exp
+	| Div Exp Exp
+	
+-- Interpretation
+sEval :: Exp -> Int sEval e = case e of
+	Const x -> x
+	Add e1 e2 -> sEval e1 + sEval e2
+	Mul e1 e2 -> sEval e1 * sEval e2
+	Div e1 e2 -> sEval e1 `div` sEval e2
+```
+
