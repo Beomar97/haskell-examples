@@ -312,3 +312,190 @@ Wir können in Haskell direkt eine Funktion fix zum finden von Fixpunkten defin
 fix f = f $ fix f
 ```
 
+## Functor, Applicative und Monad
+
+Die **Functor** Typklasse und die zur Functor Klasse gehörenden Regeln:
+
+```haskell
+class Functor f where
+	fmap :: (a -> b) -> f a -> f b
+	
+-- Infix Variante von fmap
+(<$>) = fmap
+	
+-- Identität
+fmap id = id
+id <$> x = x
+
+-- Komposition
+fmap (f . g) = (fmap f) . (fmap g)
+(f . g) <$> x = f <$> (g <$> x)
+```
+
+Eine Funktion, die den *Vorgänger* einer natürlichen Zahl berechnet:
+
+```haskell
+predec :: Int -> Maybe Int
+predec x
+	| x <= 1 = Nothing
+	| otherwise = Just $ x - 1
+```
+
+Weil `Maybe` ein Functor ist, kann diese Funktion bequem mit anderen Funktionen kombiniert werden, die eigentlich einen `Int` statt einen `Maybe Int` konsumieren.
+
+Jedoch ist dies nicht im Kontext einer zweistelligen Funktion möglich:
+
+```haskell
+h x y= (*) <$> (predecx) (predecy)
+-- Nicht möglich da
+(*) <$> (predec x) :: Maybe (Int -> Int)
+predec y :: Maybe Int
+-- Eine Funktion von folgendem Typ wird benötigt
+(<*>) :: Maybe (Int -> Int) -> Maybe Int -> Maybe Int
+```
+
+Die **Applicative Functor** Klasse und die Applicative Instanz von `Maybe` bietet genau dies:
+
+```haskell
+-- Applicative Functor Klasse
+class (Functor f) => Applicative f where
+	pure :: a -> f a
+	(<*>) :: f (a -> b) -> f a -> f b
+	
+-- Aplicative Instanz von Maybe
+pure = Just
+Just f <*> x = f <$> x
+Nothing <*> _ = Nothing
+```
+
+Die Applicative Klasse hat folgende Regeln:
+
+```haskell
+-- Identität
+pure id <*> vv = vv
+
+-- Komposition
+pure (.) <*> f <*> g <*> x = f <*> (g <*> x)
+
+-- Homomorphismus
+pure f <*> pure v = pure (f v)
+
+-- Interchange
+f <*> pure x = pure ($ x) <*> f
+```
+
+Beispiel Funktion `buildUser :: Profile -> Maybe User`
+
+```haskell
+-- Daten
+data User = User
+	{ uName :: String
+	, uEmail :: String
+	, uCity :: String
+	}
+type Profile = [(String , String)]
+petersProfile :: Profile
+petersProfile =
+	[ ("name", "peter")
+	, ("email", "peter@peter.com")
+	, ("city", "zueri")
+	]
+
+-- Lookup Funktion
+myLookup :: String -> Profile -> Maybe String
+myLookup str [] = Nothing
+myLookup str ((key, value):assocs)
+	| str == key = Just value
+	| otherwise = myLookup str assocs
+
+-- buildUser ohne Applicative Instanz von Maybe
+buildUser :: Profile -> Maybe User
+buildUser prof = case myLookup "name" prof of
+	Nothing -> Nothing
+	Just name -> case myLookup "email" prof of
+		Nothing -> Nothing
+		Just email -> case myLookup "city" prof of
+			Nothing -> Nothing
+			Just city -> Just $ User name email city
+			
+-- buildUser mithilfe von (<$>) und (<*>)
+buildUser profile = User
+	<$> myLookup "name" profile
+	<*> myLookup "email" profile
+	<*> myLookup "city" profile
+```
+
+Erweiterung der Funktion; City eines Benutzers wird neu in einer separaten Liste mit der Email zugeordnet. Email Daten müssen verwendet werden und müssen daher bereits vorhanden sein. Daten können nicht unabhängig voneinander hergestellt werden, Lösung nur mit einem Applicative ist nicht mehr möglich.
+
+Weil wir die Email Daten brauchen um auf die City Daten zugreifen zu können, benötigen wir eine Funktion, die folgende Signatur hat:
+
+```haskell
+ bind :: Maybe String -> (String -> Maybe String) -> Maybe String
+```
+
+Weil wir damit Funktionen vom Typ `String -> Maybe String` hintereinander ausführen können.
+
+Die **Monad** Klasse bietet das passende Interface:
+
+```haskell
+class (Applicative m) => Monad m where
+	(>>=) :: m a -> (a -> m b) -> m b
+```
+
+Regeln der Monad Klasse:
+
+```haskell
+-- Left Identity
+pure a >>= f = f a
+
+-- Right Identity
+m >>= pure = m
+
+-- Assozitivität
+(m >>= f) >>= g = m >>= (\x -> f x >>= g)
+```
+
+Beispiel Funktion `buildUser :: Profile -> Maybe User`
+
+```haskell
+-- Neue Typen
+type CityBase = [(String , String)]
+annasProfile :: Profile
+annasProfile =
+	[ ("name", "Anna")
+	, ("email", "anna@nasa.gov")
+	]
+citiesB :: CityBase
+citiesB =
+	[ ("anna@nasa.gov", "Washington")
+	, ("peter@peter.com", "Zueri")
+	]
+	
+-- Von Hand
+buildUserC :: Profile -> CityBase -> Maybe User
+buildUserC p cities = case myLookup "name" p of
+	Nothing -> Nothing
+	Just name -> case myLookup "email" p of
+		Nothing -> Nothing
+		Just email -> case myLookup email cities of
+			Nothing -> Nothing
+			Just city -> Just $
+				User name email city
+				
+-- Mit Monad
+buildUserB :: Profile -> CityBase -> Maybe User
+buildUserB profile cities =
+	myLookup "name" profile
+		>>= \n -> myLookup "email" profile
+		>>= \e -> myLookup e cities
+		>>= \c -> pure $ User n e c
+		
+-- Mit do Notation
+buildUserCM :: Profile -> CityBase -> Maybe User
+buildUserCM profile cities = do
+	name <- myLookup "name" profile
+	email <- myLookup "email" profile
+	city <- myLookup email cities
+	pure $ User name email city
+```
+
