@@ -36,16 +36,21 @@ fact = prim (const 1) (\r n x -> (n+1) * r)
 
 -- Welche der folgenden Funktionen liegen in einer endrekursiven Form vor?
 
+{-
 fgx
     | x == 0 = g x
     | otherwise = g $ f g (x -1)
+-}
 -- Nein
 
+{-
 length xs = case xs of
     [] -> 0
     x : xs -> (+1) $ length xs
+-}
 -- Nein
 
+{-
 length' ls = aux
     $ map (const 1)
     $ ls
@@ -54,6 +59,7 @@ length' ls = aux
             [] -> 0
             [x] -> x
             x:xs -> aux $ map (\y -> (+1) x) xs
+-}
 -- Ja
 
 ------------------------------------------------------------
@@ -118,7 +124,7 @@ depthTR t = depth_ 0 [t]
 ------------------------------------------------------------
 
 {-
-    Die Fibonacci Funktion ist definiert als die Summe der zwei vorherigen Glieder (und An- fangswerte).
+    Die Fibonacci Funktion ist definiert als die Summe der zwei vorherigen Glieder (und Anfangswerte).
     Die "Tribonacci"-Funktion ist als Summe der letzten drei Glieder definiert:
     trib(0) = 1
     trib(1) = 1

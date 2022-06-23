@@ -43,7 +43,7 @@ zoe :: Car
 zoe = Car (Model "Zoe" 2) (Make "Renault") 2019 (Color "White") (Horsepower 150)
 
 -- c) Implementieren Sie eine Ord Instanz für den Car Typ.
--- Beachten Sie die Regeln der Typklasse (http://hackage.haskell.org/package/base-4.12.0.0/docs/Data-Ord. html).
+-- Beachten Sie die Regeln der Typklasse (http://hackage.haskell.org/package/base-4.12.0.0/docs/Data-Ord.html).
 instance Ord Car where
     compare car1 car2 = compare
         (power car1, year car1, make car1, model car1, year car1)
@@ -53,10 +53,10 @@ instance Ord Car where
 -- sort [zoe, ferrari, ford]
 -- aus.
 unsortedCars :: [Car]
-unsortedCars = [ford, ferrari, zoe]
+unsortedCars = [zoe, ferrari, ford]
 
 sortedCars :: [Car]
-sortedCars = sort [ford, ferrari, zoe]
+sortedCars = sort [zoe, ferrari, ford]
 -- Output: ford, zoe, ferrari
 
 ------------------------------------------------------------
@@ -65,7 +65,7 @@ sortedCars = sort [ford, ferrari, zoe]
 
 -- Wir erinnern uns an die Implementierung von Binärbäumen aus der Vorlesung:
 data Tree a
-    = Node (Tree a) a (Tree a) 
+    = Node a (Tree a) (Tree a) 
     | Leaf a
 
 -- a) Implementieren Sie eine Funktion
@@ -74,12 +74,13 @@ data Tree a
 -- in einer Liste “aufsammelt”.
 collect :: Tree a -> [a]
 collect a = case a of
-    Node l a r -> a : (collect l ++ collect r)
+    Node a l r -> a : (collect l ++ collect r)
     Leaf a -> [a]
 
-collect' t = case t of -- sample solution
+collect' :: Tree a -> [a]
+collect' t = case t of
     Leaf a -> [a]
-    Node l a r -> a : concat [collect l, collect r]
+    Node a l r -> a : concat [collect' l, collect' r]
 
 -- b) Passen Sie den Datentyp aus der Vorlesung so an,
 -- dass beliebig verzweigte Bäume modelliert werden können
@@ -108,8 +109,12 @@ exampleTree = GeneralTree 1
 -- a) Implementieren Sie einen Typ NatNumber entsprechend der Definition:
 -- "Eine natürliche Zahl ist entweder Null oder Nachfolger einer natürlichen Zahl."
 data NatNumber
-    = Null | Successor NatNumber
+    = Null
+    | Successor NatNumber
     deriving Show
+
+three :: NatNumber
+three = Successor $ Successor $ Successor Null
 
 -- b) Implementieren Sie eine Funktion
 -- eval: NatNumber -> Integer

@@ -55,26 +55,47 @@ Implementieren Sie eine Funktion zum
 Berechnen der Tiefe eines Baumes:
 --}
 
-data BTree a
-    = Node a (BTree a) (BTree a)
-    | Empty deriving Show
+data Tree a
+    = Leaf a
+    | Node a (Tree a) (Tree a)
+    deriving (Show, Eq)
 
-bTree
-    :: (a -> b -> b -> b)
-    -> b
-    -> BTree a
-    -> b
-bTree _ empty Empty = empty
-bTree node empty (Node a t1 t2) = node a (recurse t1) (recurse t2)
+tree :: (a -> b) -> (a -> b -> b -> b) -> Tree a -> b
+tree leaf node t = case t of
+    Leaf a -> leaf a
+    Node a l r -> node a (recurse l) (recurse r)
+        where
+            recurse = tree leaf node
+
+{-
+     1
+    / \
+   21 3
+-}
+exampleTree :: Tree Integer
+exampleTree = Node 1 (Leaf 21) (Leaf 3)
+
+sumTree :: Tree Integer -> Integer
+sumTree = tree id (\x y z -> x + y + z)
+
+sumTree' t = case t of
+    Leaf x -> x
+    Node x l r -> x + (sumTree l) + (sumTree r)
+
+maxTree :: Tree Integer -> Integer
+maxTree = tree id node
     where
-        recurse = bTree node empty
+        node x y z = max x (max y z)
 
+maxTree' t = case t of
+    Leaf x -> x
+    Node x l r -> max x (max (maxTree l) (maxTree r))
 
-btDepth :: BTree a -> Integer
-btDepth = bTree (\x y z -> 1 + max y z) 0
-
-btTex :: Show a => BTree a -> String
-btTex = bTree (\a b c -> "["++ (show a) ++ b ++ c ++ "]") ""
+depth :: Tree a -> Integer
+depth = tree leaf node
+    where
+        leaf _ = 1
+        node _ y z = 1 + max y z
 
 -----------------------------------------------------------
 -- Partielle Funktionen

@@ -2,6 +2,7 @@ module Shape where
 
 import Data.List
 import Matrix (Matrix (Matrix), Vector, Point, invert, apply)
+-- :l 6_Combiners_and_EDSL/Matrix.hs 6_Combiners_and_EDSL/A_Shapes.hs
 
 {- Definition of 'Shape'
     Shapes are things that discriminate between outside and inside
@@ -160,8 +161,7 @@ render length height shape = writeFile "shape.txt" lines
 
         lines = concatMap breakLn pixels
 
-{- Examples
---}
+-- Examples
 
 shape1 = translate (100, 100) $ stretch 10 unitDisc
 shape2 = rotate 1 unitSq

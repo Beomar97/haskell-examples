@@ -66,9 +66,9 @@ thus, q.e.d
 
 -- Die Klasse Contravariant ist fast gleich wie die Klasse Functor definiert,
 -- nur etwas “verdreht”. Anstelle der Funktion 
-fmap :: (a -> b) -> f a -> f b
+-- fmap :: (a -> b) -> f a -> f b
 -- muss man eine Funktion
-contramap :: (b -> a) -> f a -> f b
+-- contramap :: (b -> a) -> f a -> f b
 -- implementieren. Definieren Sie einen Datentyp und eine dazu passende Instanz für Contravariant:
 newtype MyPredicate a = MyPredicate (a -> Bool)
 instance Contravariant MyPredicate where

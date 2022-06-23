@@ -60,6 +60,7 @@ data Card = Card
     {   face :: Face
     ,   suit :: Suit
     }
+    deriving Show
 
 -- A hand holds multiple cards
 type Hand = [Card]

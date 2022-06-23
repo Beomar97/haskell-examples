@@ -5,6 +5,7 @@
 -- Implementieren Sie die Shapes EDSL als “Deep Embedding”.
 
 import Matrix ( Vector, Point, Matrix (Matrix), apply, invert )
+-- :l 6_Combiners_and_EDSL/Matrix.hs 6_Combiners_and_EDSL/C_Exercise-6.hs
 
 data Shape
     = Empty

@@ -1,7 +1,7 @@
 -- Simplifying type annotations
 type I = Integer
 
--- The fixed point cimbinator
+-- The fixed point combinator
 fix f = f $ fix f
 
 -- Realizing the recursive exponentiation via a fixed point
